@@ -97,3 +97,7 @@ admin
 src/zipline/_version.py
 *.code-workspace
 logs/
+
+src/zipline/*.pyd
+src/zipline/*/*.pyd
+sandbox/

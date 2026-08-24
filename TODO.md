@@ -1,0 +1,4 @@
+- [ ] Jupyter Notebook tutorial: https://github.com/stefan-jansen/zipline-reloaded/blob/main/docs/notebooks/tutorial.ipynb
+- [ ] Quickstart: https://github.com/quantsummaries/zipline-reloaded
+- [ ] getting started guide: https://zipline.ml4trading.io/beginner-tutorial
+- [ ] zipline/examples: https://github.com/stefan-jansen/zipline-reloaded/tree/main/src/zipline/examples
