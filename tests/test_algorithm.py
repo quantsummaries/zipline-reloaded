@@ -2059,6 +2059,9 @@ class TestAlgoScript(zf.WithMakeAlgo, zf.ZiplineTestCase):
             algo = self.make_algo(script=algocode, sim_params=sim_params)
             algo.run()
 
+            # ignore unrelated warnings (e.g. new DeprecationWarnings from
+            # dependencies) and keep only the one emitted by schedule_function
+            w = [x for x in w if "time rule for the second positional" in str(x.message)]
             assert len(w) == 2, f"Expected 2 warnings, got {len(w):d}"
 
             for i, warning in enumerate(w):

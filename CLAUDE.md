@@ -46,7 +46,7 @@ pip install -e .
 4. **Working with trading calendars**: Uses `exchange_calendars` library
 
 ## Current Branch
-You're on branch `v3.1.1` with some modifications to the Quandl bundle and CI fixes.
+You're on branch `yzeng` with continued development effort.
 
 ## Important Notes
 - The project uses Cython for performance-critical components

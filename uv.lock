@@ -6388,6 +6388,8 @@ test = [
 dev = [
     { name = "parameterized" },
     { name = "pytest" },
+    { name = "pytest-timeout" },
+    { name = "pytest-xdist" },
     { name = "testfixtures", version = "8.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "testfixtures", version = "12.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
@@ -6460,5 +6462,7 @@ provides-extras = ["test", "dev", "docs"]
 dev = [
     { name = "parameterized", specifier = ">=0.9.0" },
     { name = "pytest", specifier = ">=9.1.1" },
+    { name = "pytest-timeout", specifier = ">=2.4.0" },
+    { name = "pytest-xdist", specifier = ">=3.8.0" },
     { name = "testfixtures", specifier = ">=8.3.0" },
 ]
