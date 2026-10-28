@@ -1,6 +1,6 @@
 # Zipline Function Dependencies
 
-> **Version**: written against branch `yzeng` at HEAD `d2242707` (2026-10-08).
+> **Version**: written against branch `yzeng` at HEAD `b0763efe` (2026-10-27, Python 3.12 / pandas 3.x compatibility pass). Prior revision: HEAD `d2242707` (2026-10-08).
 
 This document maps in-package function calls in `src/zipline/`. It is
 intended as a navigation aid for reviewing implementation changes: a change
@@ -175,6 +175,26 @@ zipline.resources           packaged data
   is done inside class methods. Future passes should run the AST walker
   per subpackage (`finance/`, `data/`, `pipeline/`, `utils/`) rather than
   at the top level.
+
+### Revision note (HEAD `b0763efe`, 2026-10-27)
+The Python 3.12 / pandas 3.x pass changed subpackage internals without
+adding top-level function edges, so the layering above is unchanged. The
+highest-impact internal changes for dependency tracking are:
+
+- `utils/preprocess.preprocess` decorator — rewritten to define the
+  corrected function via `exec` and return `exec_locals[func.__name__]`
+  (no longer patches `new_func.__code__`); this is the decorator that wraps
+  the largest number of `TradingAlgorithm` / API methods.
+- `utils/calendar_utils.get_calendar` — now rejects left-sided calendars
+  (raises `TypeError`); all calendar consumers must pass `side="right"`.
+- `finance/ledger.PositionTracker.process_splits` and
+  `finance/blotter/simulation_blotter` — split handling now closes
+  zero-amount positions / drops zero-amount open orders (affects any code
+  that inspects open orders or position state after a split).
+- `data/bundles/csvdir` — `_empty_divs_splits()` seeds explicit dtypes so
+  `pd.concat` keeps numeric / datetime dtypes under pandas 3.
+- `data/bcolz_minute_bars` — uint scaling now guards `uint32` overflow and
+  handles early market open/close slices.
 
 [⬆ 回到目录](#table-of-contents)
 

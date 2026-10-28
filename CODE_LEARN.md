@@ -1,6 +1,6 @@
 # Zipline Reloaded Learning Roadmap
 
-> **Version**: written against branch `yzeng` at HEAD `d2242707` (2026-10-08).
+> **Version**: written against branch `yzeng` at HEAD `b0763efe` (2026-10-27, Python 3.12 / pandas 3.x compatibility pass). Prior revision: HEAD `d2242707` (2026-10-08).
 
 Entry-points and recommended reading order for learning this codebase.
 All paths below are relative to the repo root `zipline-reloaded/`.
@@ -12,6 +12,7 @@ All paths below are relative to the repo root `zipline-reloaded/`.
 - [3. Inspect backtest results without ingesting a bundle](#3-inspect-backtest-results-without-ingesting-a-bundle)
 - [4. Escalate through the examples (one new concept per file)](#4-escalate-through-the-examples-one-new-concept-per-file)
 - [5. Prerequisite before running anything live](#5-prerequisite-before-running-anything-live)
+- [6. Changes to be aware of (HEAD `b0763efe`, 2026-10-27)](#6-changes-to-be-aware-of-head-b0763efe-2026-10-27)
 - [Suggested order](#suggested-order)
 
 ## 1. Run the minimal example first
@@ -78,6 +79,27 @@ Reference: https://github.com/stefan-jansen/zipline-reloaded/tree/main/src/zipli
 - [ ] Ingest a data bundle — read `docs/source/bundles.rst` and set up a
       supported bundle (e.g. Quandl/Alpha Vantage/custom). The bundled
       `quantopian-quandl` source is no longer available upstream.
+
+[⬆ 回到目录](#table-of-contents)
+
+## 6. Changes to be aware of (HEAD `b0763efe`, 2026-10-27)
+
+The Python 3.12 / pandas 3.x pass changed internals that a learner may hit:
+
+- `utils/preprocess` (the decorator on most `TradingAlgorithm` / API
+  methods) now defines the corrected function via `exec` instead of
+  rebuilding `func.__code__`.
+- `utils/calendar_utils.get_calendar(...)` only accepts `side="right"`;
+  a left-sided request raises `TypeError`.
+- After a split, positions that round to zero shares are closed and
+  zero-amount open orders are dropped (`finance/ledger.py`,
+  `finance/blotter/simulation_blotter.py`) — inspect order / position state
+  accordingly.
+- `utils/run_algo.py` imports `EquityPricing` (the `USEquityPricing` alias
+  is gone).
+- pandas 3.x dtype handling: datetime indexes are converted via
+  `.to_numpy(dtype="datetime64[ns]").view(np.int64)`, and the csvdir bundle
+  seeds empty dividends / splits frames with explicit dtypes.
 
 [⬆ 回到目录](#table-of-contents)
 

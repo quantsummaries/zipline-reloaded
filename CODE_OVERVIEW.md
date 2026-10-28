@@ -1,6 +1,6 @@
 # Zipline Documentation
 
-> **Version**: written against branch `yzeng` at HEAD `d2242707` (2026-10-08).
+> **Version**: written against branch `yzeng` at HEAD `b0763efe` (2026-10-27, Python 3.12 / pandas 3.x compatibility pass). Prior revision: HEAD `d2242707` (2026-10-08).
 
 ## Table of Contents
 - [Review Addendum](#review-addendum)
@@ -12,7 +12,8 @@
 
 
 ## Review Addendum
-_Originally written at HEAD on 2026-10-09 (branch `yzeng`)._
+_Originally written at HEAD on 2026-10-09 (branch `yzeng`); last re-verified
+at HEAD `b0763efe` on 2026-10-27._
 
 ### Scope reviewed
 
@@ -64,6 +65,67 @@ _Originally written at HEAD on 2026-10-09 (branch `yzeng`)._
   dependency tree.
 - `CODE_LEARN.md` — learning roadmap (migrated from TODO.md 2026-10-09).
 - `TODO.md` — maintenance task skeleton.
+
+### Re-verified 2026-10-27 at HEAD `b0763efe` (d2242707..b0763efe)
+
+The Python 3.12 / pandas 3.x pass touched 27 `src/zipline/` files plus the
+Cython `_finance_ext.pyx`. Key behavior / implementation changes:
+
+- **Split handling closed-loop fixes**:
+  - `finance/blotter/simulation_blotter.py` — orders left with
+    `open_amount == 0` after a split are dropped from `orders_to_modify` and
+    `new_orders`; if no orders remain the asset's `open_orders` entry is
+    deleted. This prevents an orphaned zero-amount order from tripping the
+    `assert not orders` guard in `cancel_all_orders_for_asset` when the
+    asset is auto-closed.
+  - `finance/ledger.py` (`PositionTracker.process_splits`) — a position
+    whose `amount == 0` after a split is now closed (deleted from `positions`
+    and `_positions_store`), mirroring a fill down to zero.
+  - `finance/position.py` — share-count rounding for stock dividends /
+    splits: near-integer values are snapped to the integer via
+    `np.rint` (+ spacing tolerance), otherwise truncated.
+  - `finance/order.py` — split ratio applied via `int(open_amount / ratio)`.
+- **`utils/preprocess.py`** — the `preprocess` decorator was rewritten to
+  define the corrected function via `exec` and return
+  `exec_locals[func.__name__]`, instead of rebuilding
+  `new_func.__code__ = CodeType(...)`. This removes the manual
+  `types.CodeType` reconstruction (which broke under Python 3.12).
+- **`data/bcolz_minute_bars.py`** — scaled uint columns now guard against
+  `uint32` overflow (`scaled_col >= np.iinfo(np.uint32).max` → 0) and use
+  early market open/close slices for partial-day sessions.
+- **`data/bundles/csvdir.py`** — new `_empty_divs_splits()` produces empty
+  dividends / splits frames with explicit dtypes (sid `int64`, amount
+  `float64`, dates `datetime64[ns]`); per-symbol frames are `.astype(...)`
+  seeded because pandas 3.0 removed the object-dtype upcast that older
+  `pd.concat` did implicitly.
+- **pandas 3.x dtype plumbing** — `.view(np.int64)` on datetime indexes is
+  now `pd.Index(ix.to_numpy(dtype="datetime64[ns]").view(np.int64))` in
+  `assets/assets.py`, `assets/asset_writer.py`, `pipeline/loaders/synthetic.py`,
+  `utils/events.py`; `data/adjustments.py` uses
+  `.to_numpy(dtype="datetime64[ns]")` + `np.searchsorted`.
+- **Timezone normalization** — several lookups convert an aware timestamp to
+  naive UTC first (`.tz_convert("UTC").tz_localize(None)`): `algorithm.py`
+  (pricing lookup date), `data/data_portal.py`, `data/bundles/core.py`
+  (bundle cutoff), `pipeline/loaders/synthetic.py`, `data/resample.py`.
+- **`utils/calendar_utils.py`** — `get_calendar(...)` now validates the
+  `side` argument via `inspect.signature(...).bind(...)`, raising `TypeError`
+  for a left-sided calendar (zipline calendars are right-sided).
+- **`finance/metrics/metric.py`** — added `end_of_bar` / `end_of_session`
+  staticmethods (partials over `_end_of_period`); guards non-finite Sharpe;
+  uses `freq=pd.offsets.MonthEnd()`; builds the `algorithm_leverages`
+  series over the session index.
+- **`pipeline/classifiers/classifier.py`** — `Classifier` gains class-level
+  `__gt__/__ge__/__lt__/__le__` staticmethods that raise via `bad_compare`
+  (comparisons are not meaningful on classifiers).
+- **`pipeline/graph.py`** — node attribute access switched to
+  `self.graph.nodes[term]` (networkx 3 API).
+- **`utils/pandas_utils.py`** — passes `dropna=False` into an internal
+  reshape to preserve the target shape under pandas 3.
+- **`utils/memoize.py`** — removed an unreachable `misses += 1`.
+- **`utils/run_algo.py`** — `USEquityPricing` import renamed to
+  `EquityPricing`.
+
+[⬆ 回到目录](#table-of-contents)
 
 [⬆ 回到目录](#table-of-contents)
 
