@@ -1465,9 +1465,13 @@ class AssetFinder:
             )
 
         if dates.tz is not None:
-            dates = dates.tz_convert("UTC").tz_localize(None)
+            utc_dates = dates.tz_convert("UTC")
+            raw_date_index = utc_dates.tz_localize(None)
+        else:
+            utc_dates = dates
+            raw_date_index = dates
         raw_dates = as_column(
-            dates.to_numpy(dtype="datetime64[ns]").view("int64"),
+            raw_date_index.to_numpy(dtype="datetime64[ns]").view("int64"),
         )
         if include_start_date:
             mask = lifetimes.start <= raw_dates
@@ -1475,7 +1479,7 @@ class AssetFinder:
             mask = lifetimes.start < raw_dates
         mask &= raw_dates <= lifetimes.end
 
-        return pd.DataFrame(mask, index=dates, columns=lifetimes.sid)
+        return pd.DataFrame(mask, index=utc_dates, columns=lifetimes.sid)
 
     def equities_sids_for_country_code(self, country_code):
         """Return all of the sids for a given country.

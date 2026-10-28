@@ -1116,11 +1116,10 @@ class MinuteEquityHistoryTestCase(WithHistory, zf.WithMakeAlgo, zf.ZiplineTestCa
         with handle_non_market_minutes(bar_data):
             bar_data.history(pd.Index([self.ASSET1, self.ASSET2]), "high", 5, "1m")
 
-    # for some obscure reason at best 2 of 3 cases of can pass depending on */ order
-    # in last two assert_array_equal
-    # @unittest.skip("Unclear issue with two test cases")
-    @pytest.mark.xfail(reason="Unclear issue with two test cases")
     def test_overnight_adjustments(self):
+        if self.TRADING_CALENDAR_PRIMARY_CAL != "us_futures":
+            pytest.xfail("Unclear issue with two test cases")
+
         # Should incorporate adjustments on midnight 01/06
         current_dt = pd.Timestamp("2015-01-06 8:45", tz="US/Eastern")
         bar_data = self.create_bardata(
