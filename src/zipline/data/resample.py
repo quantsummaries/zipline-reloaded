@@ -63,7 +63,9 @@ def minute_frame_to_session_frame(minute_frame, calendar):
     how = OrderedDict(
         (c, _MINUTE_TO_SESSION_OHCLV_HOW[c]) for c in minute_frame.columns
     )
-    labels = calendar.minutes_to_sessions(minute_frame.index)
+    labels = calendar.minutes_to_sessions(
+        minute_frame.index.astype("datetime64[ns, UTC]")
+    )
     return minute_frame.groupby(labels).agg(how)
 
 

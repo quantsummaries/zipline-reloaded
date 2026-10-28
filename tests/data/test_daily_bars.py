@@ -590,10 +590,12 @@ class BcolzDailyBarTestCase(WithBcolzEquityDailyBarReader, _DailyBarsTestCase):
         # Test loading on all assets.
         all_assets = np.array(list(self.assets))
         all_results = self.daily_bar_reader.currency_codes(all_assets)
-        all_expected = self.make_equity_daily_bar_currency_codes(
-            self.DAILY_BARS_TEST_QUERY_COUNTRY_CODE,
-            all_assets,
-        ).values
+        all_expected = np.asarray(
+            self.make_equity_daily_bar_currency_codes(
+                self.DAILY_BARS_TEST_QUERY_COUNTRY_CODE,
+                all_assets,
+            ).values
+        )
         assert_equal(all_results, all_expected)
 
         assert all_results.dtype == np.dtype(object)
@@ -1044,10 +1046,12 @@ class _HDF5DailyBarTestCase(
         # Test loading on all assets.
         all_assets = np.array(list(self.assets))
         all_results = self.daily_bar_reader.currency_codes(all_assets)
-        all_expected = self.make_equity_daily_bar_currency_codes(
-            self.DAILY_BARS_TEST_QUERY_COUNTRY_CODE,
-            all_assets,
-        ).values
+        all_expected = np.asarray(
+            self.make_equity_daily_bar_currency_codes(
+                self.DAILY_BARS_TEST_QUERY_COUNTRY_CODE,
+                all_assets,
+            ).values
+        )
         assert_equal(all_results, all_expected)
 
         assert all_results.dtype == np.dtype(object)

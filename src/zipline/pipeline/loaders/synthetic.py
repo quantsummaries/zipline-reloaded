@@ -298,7 +298,12 @@ def make_bar_data(asset_info, calendar, holes=None):
                 frame.loc[dt, OHLC] = np.nan
                 frame.loc[dt, ["volume"]] = 0
 
-        frame["day"] = nanos_to_seconds(datetimes.asi8)
+        datetimes_ns = datetimes
+        if datetimes_ns.tz is not None:
+            datetimes_ns = datetimes_ns.tz_convert("UTC").tz_localize(None)
+        frame["day"] = nanos_to_seconds(
+            datetimes_ns.to_numpy(dtype="datetime64[ns]").view("int64"),
+        )
         frame["id"] = asset_id
         return frame
 

@@ -498,7 +498,7 @@ class _ClassicRiskMetrics:
         # TODO: Either fix consumer to accept `np.nan` or make the
         # `sharpe_ratio` return type configurable.
         # In the meantime, convert nan values to 0.0
-        if pd.isnull(sharpe):
+        if pd.isnull(sharpe) or not np.isfinite(sharpe):
             sharpe = 0.0
 
         sortino = ep.sortino_ratio(
@@ -571,7 +571,7 @@ class _ClassicRiskMetrics:
             start=start_session,
             # Ensure we have at least one month
             end=end - datetime.timedelta(days=1),
-            freq="M",
+            freq=pd.offsets.MonthEnd(),
             tz="utc",
         )
 

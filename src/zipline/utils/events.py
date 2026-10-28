@@ -483,6 +483,7 @@ class TradingDayOfWeekRule(StatelessRule, metaclass=ABCMeta):
             # Group by ISO year (0) and week (1)
             .groupby(sessions.map(lambda x: x.isocalendar()[0:2]))
             .nth(self.td_delta)
+            .to_numpy()
             .view(np.int64)
         )
 

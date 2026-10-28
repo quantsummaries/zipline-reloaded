@@ -1464,7 +1464,11 @@ class AssetFinder:
                 self._compute_asset_lifetimes(country_codes=country_codes)
             )
 
-        raw_dates = as_column(dates.asi8)
+        if dates.tz is not None:
+            dates = dates.tz_convert("UTC").tz_localize(None)
+        raw_dates = as_column(
+            dates.to_numpy(dtype="datetime64[ns]").view("int64"),
+        )
         if include_start_date:
             mask = lifetimes.start <= raw_dates
         else:

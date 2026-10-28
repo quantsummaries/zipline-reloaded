@@ -324,7 +324,7 @@ class SQLiteAdjustmentReader:
 
         result.rename_axis(None, inplace=True)
         result = result[sorted(dtypes)]  # ensure expected order of columns
-        return result
+        return result.astype(dtypes)
 
     def _df_dtypes(self, table_name, convert_dates):
         """Get dtypes to use when unpacking sqlite tables as dataframes."""
@@ -491,12 +491,13 @@ class SQLiteAdjustmentWriter:
             pd.Timestamp(dates[-1]),
             unique_sids,
         )
-        date_ix = np.searchsorted(dates, dividends.ex_date.values)
+        input_dates = dividends.ex_date.to_numpy(dtype="datetime64[ns]")
+        date_ix = np.searchsorted(dates, input_dates)
         mask = date_ix > 0
 
         date_ix = date_ix[mask]
         sids_ix = sids_ix[mask]
-        input_dates = dividends.ex_date.values[mask]
+        input_dates = input_dates[mask]
 
         # subtract one day to get the close on the day prior to the merger
         previous_close = close[date_ix - 1, sids_ix]
