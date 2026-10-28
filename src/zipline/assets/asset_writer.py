@@ -403,7 +403,7 @@ def _dt_to_epoch_ns(dt_series: pd.Series) -> pd.Index:
         index = index.tz_localize("UTC")
     else:
         index = index.tz_convert("UTC")
-    return index.view(np.int64)
+    return pd.Index(index.to_numpy(dtype="datetime64[ns]").view(np.int64))
 
 
 def check_version_info(conn, version_table, expected_version: int):
@@ -652,7 +652,7 @@ class AssetDBWriter:
             )
 
         if futures is not None:
-            futures = _generate_output_dataframe(_futures_defaults, futures)
+            futures = _generate_output_dataframe(futures, _futures_defaults)
 
         if exchanges is not None:
             exchanges = _generate_output_dataframe(
@@ -825,7 +825,7 @@ class AssetDBWriter:
                 df[column] = _dt_to_epoch_ns(df[column])
 
         if txn.dialect.name == "postgresql":
-            txn.execute(sa.text(f"ALTER TABLE {tbl.name} DISABLE TRIGGER ALL;"))
+            txn.execute(sa.text(f"ALTER TABLE {tbl.name} DISABLE TRIGGER ALL"))
 
         df.to_sql(
             tbl.name,

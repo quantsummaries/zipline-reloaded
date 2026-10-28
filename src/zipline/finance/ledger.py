@@ -135,6 +135,16 @@ class PositionTracker:
                 leftover_cash = position.handle_split(asset, ratio)
                 total_leftover_cash += leftover_cash
 
+                if position.amount == 0:
+                    # The split left no whole shares; the position is closed,
+                    # as it would be by a fill down to zero.
+                    del self.positions[asset]
+
+                    try:
+                        del self._positions_store[asset]
+                    except KeyError:
+                        pass
+
         return total_leftover_cash
 
     def earn_dividends(self, cash_dividends, stock_dividends):
@@ -168,6 +178,9 @@ class PositionTracker:
             div_owed = self.positions[stock_dividend.asset].earn_stock_dividend(
                 stock_dividend
             )
+            if not div_owed["share_count"]:
+                # Less than one share (also -0.0 for a small short).
+                continue
             try:
                 self._unpaid_stock_dividends[stock_dividend.pay_date].append(
                     div_owed,
@@ -201,8 +214,14 @@ class PositionTracker:
         # be negative in the case of short positions.
         try:
             stock_payments = self._unpaid_stock_dividends[next_trading_day]
+            # Same as cash dividends: a pay date is settled once.
+            del self._unpaid_stock_dividends[next_trading_day]
         except KeyError:
             stock_payments = []
+
+        if stock_payments:
+            # Share count changed, so cached position stats are stale.
+            self._dirty_stats = True
 
         for stock_payment in stock_payments:
             payment_asset = stock_payment["payment_asset"]
@@ -501,7 +520,8 @@ class Ledger:
             A list of splits. Each split is a tuple of (asset, ratio).
         """
         leftover_cash = self.position_tracker.handle_splits(splits)
-        if leftover_cash > 0:
+        if leftover_cash:
+            # Either sign: a short pays cash to settle its fraction.
             self._cash_flow(leftover_cash)
 
     def process_order(self, order):
